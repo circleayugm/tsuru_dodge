@@ -1,0 +1,9 @@
+/Library
+/Logs
+/Temp
+/obj/Debug
+/.vsconfig
+/*.csproj
+/UserSettings
+/*.sln
+/.vs/tsuru_dodge/v16/*.suo

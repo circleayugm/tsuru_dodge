@@ -61,9 +61,9 @@ public class TouchPanelCtrl : MonoBehaviour {
 	// Update is called once per frame
 	void Update()
 	{
-		Vector3 p = Input.mousePosition;    // タッチ位置取得.
+		//Vector3 p = Input.mousePosition;    // タッチ位置取得.
 		pos_old = pos;
-		pos = new Vector3((p.x - (Screen.width / 2)) * multi, (p.y - (Screen.height / 2)) * multi, 0);  // 画面中心を(0,0,0)とした座標軸に変換.
+		//pos = new Vector3((p.x - (Screen.width / 2)) * multi, (p.y - (Screen.height / 2)) * multi, 0);  // 画面中心を(0,0,0)とした座標軸に変換.
 		if (pos.x > 250)	// 照準の移動範囲を制限
 		{
 			pos.x = 250;

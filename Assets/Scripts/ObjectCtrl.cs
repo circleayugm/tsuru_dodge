@@ -81,6 +81,7 @@ public class ObjectCtrl : MonoBehaviour
 
 	float[] param = new float[4];
 
+	MainSceneCtrl MAIN;
 	TouchPanelCtrl TOUCH;
 	ObjectManager MANAGE;
 //	PadControlManager pad;
@@ -88,6 +89,7 @@ public class ObjectCtrl : MonoBehaviour
 
 	void Awake()
 	{
+		MAIN = GameObject.Find("root_main").GetComponent<MainSceneCtrl>();
 		TOUCH = GameObject.Find("root_main").GetComponent<TouchPanelCtrl>();
 		MANAGE = GameObject.Find("root_main").GetComponent<ObjectManager>();
 //		pad = GameObject.Find("gameroot").GetComponent<PadControlManager>();
@@ -146,22 +148,62 @@ public class ObjectCtrl : MonoBehaviour
 				if (count == 0)
 				{
 					MainHit.enabled = true;
-					MainHit.radius = 0.5f;
+					NOHIT = false;
+					MainHit.radius = 0.1f;
 					MainPic.color = COLOR_NORMAL;
 					MainPic.sortingOrder = 5;
 					MainPic.sprite = MANAGE.SPR_SHIP[0];
 				}
+				if (MAIN.mode != MainSceneCtrl.MODE.OVER)
+				{
+					MainPic.sprite = MANAGE.SPR_SHIP[0];
+					obj_mode = ObjectManager.MODE.HIT;
+
+					if (Input.GetKey(KeyCode.W) == true)
+					{
+						TOUCH.pos.y += 0.2f;
+						if (TOUCH.pos.y>4.2f)
+						{
+							TOUCH.pos.y = 4.2f;
+						}
+					}
+					if (Input.GetKey(KeyCode.S) == true)
+					{
+						TOUCH.pos.y -= 0.2f;
+						if (TOUCH.pos.y < -4.2f)
+						{
+							TOUCH.pos.y = -4.2f;
+						}
+					}
+					if (Input.GetKey(KeyCode.D) == true)
+					{
+						TOUCH.pos.x += 0.2f;
+						if (TOUCH.pos.x > 5.2f)
+						{
+							TOUCH.pos.x = 5.2f;
+						}
+					}
+					if (Input.GetKey(KeyCode.A) == true)
+					{
+						TOUCH.pos.x -= 0.2f;
+						if (TOUCH.pos.x < -5.2f)
+						{
+							TOUCH.pos.x = -5.2f;
+						}
+					}
+				}
+				else if (MAIN.mode== MainSceneCtrl.MODE.OVER)
+				{
+					MainPic.sprite = MANAGE.SPR_SHIP[(count >> 2) % 2];
+				}
+				this.transform.localPosition = TOUCH.pos;
+				MANAGE.SHIP_POS = this.transform.localPosition;
 				break;
 
 
 
 
 			case ObjectManager.TYPE.ENEMY1:
-				if (MANAGE.destroy == true)
-				{
-					Dead();
-				}
-				else
 				{
 
 					if (count == 0)
@@ -170,7 +212,7 @@ public class ObjectCtrl : MonoBehaviour
 						NOHIT = false;
 						LIFE = 2;
 						power = 1;
-						MainHit.radius = 1.0f;
+						MainHit.radius = 2f;
 						MainPic.sortingOrder = 2;
 						MainPic.color = COLOR_NORMAL;
 						MainPic.sprite = MANAGE.TSURU[0];
@@ -181,7 +223,7 @@ public class ObjectCtrl : MonoBehaviour
 
 					this.transform.localPosition += AngleToVector3(angle, speed)/40f;
 					this.transform.localEulerAngles += new Vector3(0, 0, param[0]);
-
+					this.transform.localScale += new Vector3(0.001f, 0.001f, 0);
 				}
 				if (Mathf.Abs(this.transform.localPosition.x)>9f)
 				{
@@ -208,34 +250,30 @@ public class ObjectCtrl : MonoBehaviour
 					switch (mode)
 					{
 						case 0:
-							MainPic.sprite = SPR_CRUSH[(count % 16) >> 2];
+							MainPic.sprite = MANAGE.TSURU[2];
 							if (count == 16)
 							{
 								MANAGE.Return(this);
-								//game.ReturnObject(this);
 							}
 							break;
 						case 1:
-							MainPic.sprite = SPR_CRUSH[(count % 16) >> 2];
+							MainPic.sprite = MANAGE.TSURU[2];
 							vect = SetVector(new Vector3(0, 0, 0), speed, angle, false);
 							this.transform.localPosition += vect;
 							if (count == 16)
 							{
 								MANAGE.Return(this);
-								//game.ReturnObject(this);
 							}
 							break;
 						case 2:
-							MainPic.sprite = SPR_CRUSH[(count % 16) >> 2];
+							MainPic.sprite = MANAGE.TSURU[2];
 							vect.x = (float)Random.Range(-(count), (count)) / 10.0f;
 							vect.y = (float)Random.Range(-(count), (count)) / 10.0f;
 							this.transform.localPosition += vect;
 							MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, 1, this.transform.localPosition, Random.Range(0, 360), Random.Range(1, 5));
-							//game.SetObject(ObjectManager.TYPE.NOHIT_EFFECT, 0, this.transform.localPosition + vect, 0, 0);
 							if (count == 16)
 							{
 								MANAGE.Return(this);
-								//game.ReturnObject(this);
 							}
 							break;
 					}
@@ -289,7 +327,7 @@ public class ObjectCtrl : MonoBehaviour
 		float rad = ((rot - 90.0f) * Mathf.PI) / 180.0f;
 		vec.x = spd * Mathf.Cos(rad);           //角度からベクトル求める.
 		vec.y = spd * Mathf.Sin(rad);
-		Debug.Log("ang=" + ang + " / rot=" + rot + " / rad=" + rad);
+		//Debug.Log("ang=" + ang + " / rot=" + rot + " / rad=" + rad);
 		return vec;
 	}
 
@@ -347,124 +385,12 @@ public class ObjectCtrl : MonoBehaviour
 		}
 		switch (other.obj_type)
 		{
-			case ObjectManager.TYPE.ENEMYBULLET:    // 敵弾・自分がMYSHIPの場合に処理.
-			case ObjectManager.TYPE.ENEMYBIGBULLET: // 敵弾・自分がMYSHIPの場合に処理.
+			case ObjectManager.TYPE.ENEMY1:          // 敵・自分がMYSHIPかMYSHOTの場合に処理.
 				if (this.obj_type == ObjectManager.TYPE.MYSHIP)
 				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0, 256) > 220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				break;
-			case ObjectManager.TYPE.ENEMY1:          // 敵・自分がMYSHIPかMYSHOTの場合に処理.
-				if (this.obj_type == ObjectManager.TYPE.MYSHOT)
-				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0, 256) > 220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				else if (this.obj_type == ObjectManager.TYPE.MYSHIP)
-				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0, 256) > 220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				break;
-			case ObjectManager.TYPE.ENEMY2:          // 敵・自分がMYSHIPかMYSHOTの場合に処理.
-				if (this.obj_type == ObjectManager.TYPE.MYSHOT)
-				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0, 256) > 220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				else if (this.obj_type == ObjectManager.TYPE.MYSHIP)
-				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0, 256) > 220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				break;
-			case ObjectManager.TYPE.ENEMY3:          // 敵・自分がMYSHIPかMYSHOTの場合に処理.
-				if (this.obj_type == ObjectManager.TYPE.MYSHOT)
-				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0,256)>220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				else if (this.obj_type == ObjectManager.TYPE.MYSHIP)
-				{
-					int rnd = Random.Range(0, 2);
-					if (Random.Range(0, 256) > 220)
-					{
-						rnd = 2;
-					}
-					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, rnd, other.transform.localPosition, 0, 0);
-					Damage(other.power);
-					other.Damage(power);
-				}
-				break;
-/*
-			case ObjectManager.TYPE.MYSHIP:         // 自機・自分がENEMYの場合に処理.
-				if (
-					(this.obj_type == ObjectManager.TYPE.ENEMY1)
-				||	(this.obj_type == ObjectManager.TYPE.ENEMY2)
-				||	(this.obj_type == ObjectManager.TYPE.ENEMY3)
-				)
-				{
-					MainPic.color = COLOR_DAMAGE;
-					//Damage(other.power);
-					other.Damage(power);
-				}
-				else if (
-					(this.obj_type == ObjectManager.TYPE.ENEMYBULLET)
-				||	(this.obj_type == ObjectManager.TYPE.ENEMYBIGBULLET)
-				)
-				{
-					MainPic.color = COLOR_DAMAGE;
-					//Damage(other.power);
-					other.Damage(power);
-				}
-				break;
-*/
-			case ObjectManager.TYPE.MYSHOT:         // 自機弾・自分がENEMYの場合自分のLIFEを減らす処理.
-				if (
-					(this.obj_type == ObjectManager.TYPE.ENEMY1)
-				||	(this.obj_type == ObjectManager.TYPE.ENEMY2)
-				||	(this.obj_type == ObjectManager.TYPE.ENEMY3)
-				)
-				{
-					Damage(other.power);
-					other.Damage(power);
+					other.MainPic.sprite = MANAGE.TSURU[1];
+					MANAGE.Set(ObjectManager.TYPE.NOHIT_EFFECT, 2, other.transform.localPosition, 0, 0);
+					MAIN.GAME_END = true;
 				}
 				break;
 		}
