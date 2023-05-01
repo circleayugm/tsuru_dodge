@@ -122,16 +122,22 @@ public class MainSceneCtrl : MonoBehaviour
                         GAME_END = false;
                         mode = MODE.PLAY;
                     }
+                    else if (Input.GetKeyUp(KeyCode.Return) == true)
+                    {
+                        string msg_nostter = "SCORE = " + score + " / Play >> https://howto-nostr.info/tsuru_dodge/";
+                        Application.OpenURL("https://nostter.vercel.app/post?content=" + msg_nostter);
+                    }
                     else
                     {
-                        MSG_GAMEOVER.enabled = true;
                         if ((count >> 4) % 2 == 0)
                         {
                             MSG_PRESSBUTTON.enabled = true;
+                            MSG_GAMEOVER.enabled = true;
                         }
                         else
                         {
                             MSG_PRESSBUTTON.enabled = false;
+                            MSG_GAMEOVER.enabled = true;
                         }
                     }
                 }
